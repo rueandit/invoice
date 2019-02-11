@@ -97,17 +97,19 @@ if (req.method == "POST")
     throw new Error(sUser + " is not allowed to do this transaction");
   }
 
-  request.fcn='raiseInvoice';
-  raiseinvoice.push(invoicenum);
-  raiseinvoice.push(billedto);
-  raiseinvoice.push(invoicedate);
-  raiseinvoice.push(invoiceamount); 
-  raiseinvoice.push(itemdescription);
-  raiseinvoice.push(gr); 
-  raiseinvoice.push(ispaid);
-  raiseinvoice.push(paidamount); 
-  raiseinvoice.push(repaid);
-  raiseinvoice.push(repaymentamount); 
+  else{
+    request.fcn='raiseInvoice';
+    raiseinvoice.push(invoicenum);
+    raiseinvoice.push(billedto);
+    raiseinvoice.push(invoicedate);
+    raiseinvoice.push(invoiceamount); 
+    raiseinvoice.push(itemdescription);
+    raiseinvoice.push(gr); 
+    raiseinvoice.push(ispaid);
+    raiseinvoice.push(paidamount); 
+    raiseinvoice.push(repaid);
+    raiseinvoice.push(repaymentamount); 
+  }
 }
 
 else if(req.method == "PUT")
