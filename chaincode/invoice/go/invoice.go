@@ -33,6 +33,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	//"github.com/hyperledger/fabric/core/chaincode/lib/cid"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -87,6 +88,8 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 		return s.isPaidToSupplier(APIstub, args)
 	} else if function == "paymentToBank" {
 		return s.isPaidToBank(APIstub, args)
+	} else if function == "getInvoiceAuditHistory" {
+		return s.getInvoiceAuditHistory(APIstub, args)
 	} else if function == "getUser" {
 		return s.getUser(APIstub, args)
 	} else if function == "raiseInvoiceWithJsonInput" {
@@ -104,13 +107,13 @@ func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Respo
 			InvoiceNumber:   "1001",
 			BilledTo:        "ASUS",
 			InvoiceDate:     "07FEB2019",
-			InvoiceAmount:   10000,
+			InvoiceAmount:   10000.00,
 			ItemDescription: "LAPTOP",
 			GR:              "N",
 			IsPaid:          "N",
-			PaidAmount:      0,
+			PaidAmount:      0.00,
 			Repaid:          "N",
-			RepaymentAmount: 0},
+			RepaymentAmount: 0.00},
 	}
 
 	var buffer bytes.Buffer
@@ -131,8 +134,8 @@ func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Respo
 // DONE
 func (s *SmartContract) raiseInvoice(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
-	if len(args) != 12 { // change size
-		return shim.Error("Incorrect number of arguments. Expecting 12")
+	if len(args) != 11 { // change size
+		return shim.Error("Incorrect number of arguments. Expecting 11")
 	}
 
 	invAmount, _ := strconv.ParseFloat(args[4], 64)
@@ -155,8 +158,8 @@ func (s *SmartContract) raiseInvoice(APIstub shim.ChaincodeStubInterface, args [
 // DONE
 func (s *SmartContract) raiseInvoiceWithJSONInput(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
-	if len(args) != 12 {
-		return shim.Error("Incorrect number of arguments. Expecting 12")
+	if len(args) != 11 {
+		return shim.Error("Incorrect number of arguments. Expecting 11")
 	}
 
 	fmt.Println("args[1] > ", args[1])
@@ -314,6 +317,55 @@ func (s *SmartContract) getUser(APIstub shim.ChaincodeStubInterface, args []stri
 		return shim.Success(buffer.Bytes())
 	*/
 	return shim.Success(nil)
+}
+
+func (s *SmartContract) getInvoiceAuditHistory(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) < 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	invoiceKey := args[0]
+
+	resultsIterator, err := APIstub.GetHistoryForKey(invoiceKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer resultsIterator.Close()
+
+	// buffer is a JSON array containing historic values for the car
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+	for resultsIterator.HasNext() {
+		response, err := resultsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		// Add a comma before array members, suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+		buffer.WriteString("{\"TxId\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(response.TxId)
+		buffer.WriteString("\"")
+
+		buffer.WriteString(", \"Value\":")
+		buffer.WriteString(string(response.Value))
+
+		buffer.WriteString(", \"Timestamp\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(time.Unix(response.Timestamp.Seconds, int64(response.Timestamp.Nanos)).String())
+		buffer.WriteString("\"")
+
+		buffer.WriteString("}")
+		bArrayMemberAlreadyWritten = true
+	}
+	buffer.WriteString("]")
+
+	return shim.Success(buffer.Bytes())
 }
 
 // The main function is only relevant in unit test mode. Only included here for completeness.
