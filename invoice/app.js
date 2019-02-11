@@ -92,12 +92,14 @@ if (req.method == "POST")
 
   // IBM is our Supplier
   // This should not let other registered users to do this transaction
-  if(sUser != "IBM"){
+  if(sUser != "IBM" ){
+    
     res.json(sUser + " is not allowed to do this transaction");
     throw new Error(sUser + " is not allowed to do this transaction");
   }
 
   else{
+  
     request.fcn='raiseInvoice';
     raiseinvoice.push(invoicenum);
     raiseinvoice.push(billedto);
@@ -119,15 +121,18 @@ else if(req.method == "PUT")
         // Lotus is our OEM
         // This should not let other registered users to do this transaction
           var sUser = req.body.username;
+
           if(sUser != "Lotus"){
             res.json(sUser + " is not allowed to do this transaction");
             throw new Error(sUser + " is not allowed to do this transaction");
           }
 
-        //UPDATE state if goods are received
-        //DEFAULT state is No
-        request.fcn= 'receivedGoods',
-        raiseinvoice.push(gr);
+          else{
+            //UPDATE state if goods are received
+            //DEFAULT state is No
+            request.fcn= 'receivedGoods',
+            raiseinvoice.push(gr);
+          }
     }
     
     else if(paidamount)
@@ -140,28 +145,38 @@ else if(req.method == "PUT")
             res.json(sUser + " is not allowed to do this transaction");
             throw new Error(sUser + " is not allowed to do this transaction");
           }
-        //UPDATE state if banks already paid the supplier
-        //DEFAULT state is No
-        request.fcn= 'paymentToSupplier',
-        ispaid = 'Y';
-        raiseinvoice.push(paidamount);
-        raiseinvoice.push(ispaid);
+
+          else{
+            //UPDATE state if banks already paid the supplier
+            //DEFAULT state is No
+            request.fcn= 'paymentToSupplier',
+            ispaid = 'Y';
+            raiseinvoice.push(paidamount);
+            raiseinvoice.push(ispaid);
+          }
     }
 
     else if(repaid)
     {
         var sUser = req.body.username;
 
-        // Lotus is our OEM
-        // This should not let other registered users to do this transaction
+
         if(sUser != "Lotus"){
+          // Lotus and Tivoli is our OEM
+          // This should not let other registered users to do this transaction
           res.json(sUser + " is not allowed to do this transaction");
           throw new Error(sUser + " is not allowed to do this transaction");
         }
-        //UPDATE state if OEM already repaid the bank
-        //DEFAULT state is No
-        request.fcn= 'paymentToBank',
-        raiseinvoice.push(repaid);
+
+        else{
+          
+          //UPDATE state if OEM already repaid the bank
+          //DEFAULT state is No
+          request.fcn= 'paymentToBank',
+          repaid = "Y";
+          raiseinvoice.push(repaymentamount);
+          raiseinvoice.push(repaid);
+        }
     }
 }
 
@@ -316,6 +331,7 @@ args: ['']
 
 var ar = [];
 var attr = req.query.attr;
+var invoice = req.query.invoice;
 
 if (attr){
   
@@ -323,6 +339,15 @@ if (attr){
   request.fcn='getUser';
   request.args = ar;
 }
+
+else if (invoice)
+{
+  ar.push(invoice);
+  request.fcn='getInvoiceAuditHistory';
+  request.args = ar;
+}
+
+
 
 
 // send the query proposal to the peer
