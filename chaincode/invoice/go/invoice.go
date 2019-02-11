@@ -34,7 +34,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hyperledger/fabric/core/chaincode/lib/cid"
+	//"github.com/hyperledger/fabric/core/chaincode/lib/cid"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	sc "github.com/hyperledger/fabric/protos/peer"
 )
@@ -45,16 +45,16 @@ type SmartContract struct {
 
 // Define the invoice structure, with 10 properties.  Structure tags are used by encoding/json library
 type Invoice struct {
-	InvoiceNumber   string `json:"invoicenum"`
-	BilledTo        string `json:"billedto"`
-	InvoiceDate     string `json:"invoicedate"`
-	InvoiceAmount   string `json:"invoiceamount"`
-	ItemDescription string `json:"itemdescription"`
-	GR              string `json:"gr"`
-	IsPaid          string `json:"ispaid"`
-	PaidAmount      string `json:"paidamount"`
-	Repaid          string `json:"repaid"`
-	RepaymentAmount string `json:"repaymentamount"`
+	InvoiceNumber   string  `json:"invoicenum"`
+	BilledTo        string  `json:"billedto"`
+	InvoiceDate     string  `json:"invoicedate"`
+	InvoiceAmount   float64 `json:"invoiceamount"`
+	ItemDescription string  `json:"itemdescription"`
+	GR              string  `json:"gr"`
+	IsPaid          string  `json:"ispaid"`
+	PaidAmount      float64 `json:"paidamount"`
+	Repaid          string  `json:"repaid"`
+	RepaymentAmount float64 `json:"repaymentamount"`
 }
 
 /*
@@ -104,13 +104,13 @@ func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Respo
 			InvoiceNumber:   "1001",
 			BilledTo:        "ASUS",
 			InvoiceDate:     "07FEB2019",
-			InvoiceAmount:   "10000",
+			InvoiceAmount:   10000,
 			ItemDescription: "LAPTOP",
 			GR:              "N",
 			IsPaid:          "N",
-			PaidAmount:      "0",
+			PaidAmount:      0,
 			Repaid:          "N",
-			RepaymentAmount: "0"},
+			RepaymentAmount: 0},
 	}
 
 	var buffer bytes.Buffer
@@ -135,7 +135,11 @@ func (s *SmartContract) raiseInvoice(APIstub shim.ChaincodeStubInterface, args [
 		return shim.Error("Incorrect number of arguments. Expecting 12")
 	}
 
-	var invoice = Invoice{InvoiceNumber: args[1], BilledTo: args[2], InvoiceDate: args[3], InvoiceAmount: args[4], ItemDescription: args[5], GR: args[6], IsPaid: args[7], PaidAmount: args[8], Repaid: args[9], RepaymentAmount: args[10]}
+	invAmount, _ := strconv.ParseFloat(args[4], 64)
+	pAmount, _ := strconv.ParseFloat(args[8], 64)
+	rAmount, _ := strconv.ParseFloat(args[10], 64)
+
+	var invoice = Invoice{InvoiceNumber: args[1], BilledTo: args[2], InvoiceDate: args[3], InvoiceAmount: invAmount, ItemDescription: args[5], GR: args[6], IsPaid: args[7], PaidAmount: pAmount, Repaid: args[9], RepaymentAmount: rAmount}
 
 	invoiceAsBytes, _ := json.Marshal(invoice)
 	APIstub.PutState(args[0], invoiceAsBytes)
@@ -236,15 +240,23 @@ func (s *SmartContract) isGoodsReceived(APIstub shim.ChaincodeStubInterface, arg
 // Jenrielle Gaon
 func (s *SmartContract) isPaidToSupplier(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
-	if len(args) != 2 {
-		return shim.Error("Incorrect number of arguments. Expecting 2")
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 
 	invoiceAsBytes, _ := APIstub.GetState(args[0])
 	invoice := Invoice{}
 
+	pAmount, _ := strconv.ParseFloat(args[1], 64)
 	json.Unmarshal(invoiceAsBytes, &invoice)
-	invoice.IsPaid = args[1]
+	//if pAmount < invoice.InvoiceAmount {
+	//if invoice.InvoiceAmount > pAmount {
+	if pAmount < invoice.InvoiceAmount {
+		invoice.PaidAmount = pAmount
+		invoice.IsPaid = args[2]
+	} else {
+		return shim.Error("Paid Amount must be always less than invoice amount")
+	}
 
 	invoiceAsBytes, _ = json.Marshal(invoice)
 	APIstub.PutState(args[0], invoiceAsBytes)
@@ -279,29 +291,29 @@ func (s *SmartContract) isPaidToBank(APIstub shim.ChaincodeStubInterface, args [
 
 // Dont touch this yet
 func (s *SmartContract) getUser(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+	/*
+		attr := args[0]
+		attrValue, _, _ := cid.GetAttributeValue(APIstub, attr)
 
-	attr := args[0]
-	attrValue, _, _ := cid.GetAttributeValue(APIstub, attr)
+		msp, _ := cid.GetMSPID(APIstub)
 
-	msp, _ := cid.GetMSPID(APIstub)
+		var buffer bytes.Buffer
+		buffer.WriteString("{\"User\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(attrValue)
+		buffer.WriteString("\"")
 
-	var buffer bytes.Buffer
-	buffer.WriteString("{\"User\":")
-	buffer.WriteString("\"")
-	buffer.WriteString(attrValue)
-	buffer.WriteString("\"")
+		buffer.WriteString(", \"MSP\":")
+		buffer.WriteString("\"")
 
-	buffer.WriteString(", \"MSP\":")
-	buffer.WriteString("\"")
+		buffer.WriteString(msp)
+		buffer.WriteString("\"")
 
-	buffer.WriteString(msp)
-	buffer.WriteString("\"")
+		buffer.WriteString("}")
 
-	buffer.WriteString("}")
-
-	return shim.Success(buffer.Bytes())
-
-	// return shim.Success(nil)
+		return shim.Success(buffer.Bytes())
+	*/
+	return shim.Success(nil)
 }
 
 // The main function is only relevant in unit test mode. Only included here for completeness.
