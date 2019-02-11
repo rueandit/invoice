@@ -128,7 +128,7 @@ else if(req.method == "PUT")
         raiseinvoice.push(gr);
     }
     
-    else if(ispaid)
+    else if(paidamount)
     {
           var sUser = req.body.username;
 
@@ -141,6 +141,8 @@ else if(req.method == "PUT")
         //UPDATE state if banks already paid the supplier
         //DEFAULT state is No
         request.fcn= 'paymentToSupplier',
+        ispaid = 'Y';
+        raiseinvoice.push(paidamount);
         raiseinvoice.push(ispaid);
     }
 
