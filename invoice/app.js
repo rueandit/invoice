@@ -99,18 +99,23 @@ if (req.method == "POST")
   }
 
   else{
-  
+    // gr = 'false';
+    // ispaid = 'false';
+    // paidamount = '0';
+    // repaid = 'false';
+    // repaymentamount = '0';
+
     request.fcn='raiseInvoice';
     raiseinvoice.push(invoicenum);
     raiseinvoice.push(billedto);
     raiseinvoice.push(invoicedate);
     raiseinvoice.push(invoiceamount); 
     raiseinvoice.push(itemdescription);
-    raiseinvoice.push(gr); 
-    raiseinvoice.push(ispaid);
-    raiseinvoice.push(paidamount); 
-    raiseinvoice.push(repaid);
-    raiseinvoice.push(repaymentamount); 
+    // raiseinvoice.push(gr); 
+    // raiseinvoice.push(ispaid);
+    // raiseinvoice.push(paidamount); 
+    // raiseinvoice.push(repaid);
+    // raiseinvoice.push(repaymentamount); 
   }
 }
 
@@ -150,13 +155,13 @@ else if(req.method == "PUT")
             //UPDATE state if banks already paid the supplier
             //DEFAULT state is No
             request.fcn= 'paymentToSupplier',
-            ispaid = 'Y';
+            //ispaid = 'Y';
             raiseinvoice.push(paidamount);
-            raiseinvoice.push(ispaid);
+            //raiseinvoice.push(ispaid);
           }
     }
 
-    else if(repaid)
+    else if(repaymentamount)
     {
         var sUser = req.body.username;
 
@@ -173,9 +178,9 @@ else if(req.method == "PUT")
           //UPDATE state if OEM already repaid the bank
           //DEFAULT state is No
           request.fcn= 'paymentToBank',
-          repaid = "Y";
+          //repaid = "Y";
           raiseinvoice.push(repaymentamount);
-          raiseinvoice.push(repaid);
+          //raiseinvoice.push(repaid);
         }
     }
 }
